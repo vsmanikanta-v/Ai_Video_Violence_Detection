@@ -162,6 +162,7 @@ This project focuses on **offline analysis of short pre-recorded video clips**.
 This project is part of the **[Srivari-Hema-SSPL-2026](https://github.com/Srivari-Hema-SSPL-2026)** GitHub organization, which hosts a collection of enterprise-grade software projects demonstrating modern development practices, AI integration, and N-Tier architecture patterns.
 
 **Explore other projects:**
+
 - Visit our [organization page](https://github.com/Srivari-Hema-SSPL-2026) to discover related repositories
 - All projects follow consistent architectural principles and development standards
 - Each project serves as an educational reference for specific technology domains
