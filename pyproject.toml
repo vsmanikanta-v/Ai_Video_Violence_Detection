@@ -1,0 +1,97 @@
+[project]
+name = "ai-video-violence-detection"
+version = "0.1.0"
+description = "AI-powered video surveillance system that detects violent activities using CNN-LSTM deep learning and generates human-readable incident explanations using Generative AI"
+readme = "README.md"
+requires-python = ">=3.9"
+license = {text = "MIT"}
+authors = [
+    {name = "Viswanatha Swamy P K", email = ""}
+]
+keywords = [
+    "computer-vision",
+    "violence-detection",
+    "cnn-lstm",
+    "deep-learning",
+    "video-analysis",
+    "genai",
+    "surveillance",
+    "flask",
+    "react",
+    "postgresql"
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Scientific/Engineering :: Image Recognition",
+    "Topic :: Security",
+]
+
+# Note: Backend Python dependencies are defined in backend/requirements.txt
+# This is an N-Tier architecture project with separate frontend (React/TypeScript)
+# and backend (Flask) components. Install backend dependencies from:
+#   cd src/backend && pip install -r requirements.txt
+#   or: cd src/backend && uv pip install -r requirements.txt
+
+[project.optional-dependencies]
+dev = [
+    "black",
+    "isort",
+    "flake8",
+    "mypy",
+]
+
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.black]
+line-length = 120
+target-version = ['py39']
+include = '\.pyi?$'
+exclude = '''
+/(
+    \.git
+  | \.venv
+  | venv
+  | __pycache__
+  | \.pytest_cache
+  | \.coverage
+  | build
+  | dist
+  | node_modules
+)/
+'''
+
+[tool.isort]
+profile = "black"
+line_length = 120
+multi_line_output = 3
+include_trailing_comma = true
+force_grid_wrap = 0
+use_parentheses = true
+ensure_newline_before_comments = true
+skip_glob = ["venv/*", ".venv/*", "*.pyc", "node_modules/*"]
+
+[tool.pytest.ini_options]
+testpaths = ["backend/tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "-v --tb=short --strict-markers"
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "integration: marks tests as integration tests",
+]
+
+[tool.mypy]
+python_version = "3.9"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false
+ignore_missing_imports = true
