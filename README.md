@@ -177,7 +177,7 @@ This project is intended for academic use as a BE final year project.
 
 ## Author
 
-**Viswanatha Swamy P K**
+**VATTEM HEMA**
 
 ---
 
