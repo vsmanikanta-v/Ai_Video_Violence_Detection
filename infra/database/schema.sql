@@ -1,5 +1,5 @@
--- PostgreSQL Schema for Consumer Complaints ML + GenAI System
--- Database Schema for AI-Based Consumer Complaints Classification
+-- PostgreSQL Schema for Video Violence Detection System ML + GenAI System
+-- Database Schema for AI-Based Video Violence Detection System
 -- This schema defines tables for users, complaints, classification results, and AI explanations
 
 -- Drop existing tables if they exist (development only)
@@ -28,7 +28,7 @@ CREATE INDEX idx_users_email ON users(email);
 -- ============================================================================
 -- Complaints Table
 -- ============================================================================
--- Stores submitted consumer complaints
+-- Stores submitted Video Violence Detection System
 CREATE TABLE complaints (
     id SERIAL PRIMARY KEY,
     user_id INTEGER,

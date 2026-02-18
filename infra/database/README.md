@@ -1,6 +1,6 @@
-# Database - Consumer Complaints ML + GenAI System
+# Database - Video Violence Detection System ML + GenAI System
 
-This directory contains the PostgreSQL database schema for the AI-Based Consumer Complaints Classification System.
+This directory contains the PostgreSQL database schema for the AI-Based Video Violence Detection System.
 
 **Source of truth:** `schema.sql` is the canonical schema definition. Any change must be applied to `schema.sql` first and then reflected in `docs/11_database_schema.md`.
 
