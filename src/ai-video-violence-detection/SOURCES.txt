@@ -20,8 +20,8 @@ src/backend/tests/conftest.py
 src/backend/tests/test_auth.py
 src/backend/tests/test_health.py
 src/backend/tests/test_main.py
-src/consumer_complaints_ml_genai_ntier.egg-info/PKG-INFO
-src/consumer_complaints_ml_genai_ntier.egg-info/SOURCES.txt
-src/consumer_complaints_ml_genai_ntier.egg-info/dependency_links.txt
-src/consumer_complaints_ml_genai_ntier.egg-info/requires.txt
-src/consumer_complaints_ml_genai_ntier.egg-info/top_level.txt
+src/ai-video-violence-detection.egg-info/PKG-INFO
+src/ai-video-violence-detection.egg-info/SOURCES.txt
+src/ai-video-violence-detection.egg-info/dependency_links.txt
+src/ai-video-violence-detection.egg-info/requires.txt
+src/ai-video-violence-detection.egg-info/top_level.txt
