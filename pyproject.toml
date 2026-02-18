@@ -6,7 +6,7 @@ readme = "README.md"
 requires-python = ">=3.9"
 license = {text = "MIT"}
 authors = [
-    {name = "Viswanatha Swamy P K", email = ""}
+    {name = "Vattem Hema", email = ""}
 ]
 keywords = [
     "computer-vision",
