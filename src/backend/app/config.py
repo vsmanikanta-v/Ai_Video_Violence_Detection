@@ -1,4 +1,4 @@
-"""Configuration management for Consumer Complaints Classification System.
+"""Configuration management for Video Violence Detection System.
 
 Uses pydantic-settings to load environment variables with validation.
 All secrets must be provided via environment variables.

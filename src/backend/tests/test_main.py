@@ -15,7 +15,7 @@ def test_root_endpoint(test_client):
 
     data = response.json()
     assert data["status"] == "ok"
-    assert data["message"] == "Consumer Complaints Classification System API"
+    assert data["message"] == "Video Violence Detection System API"
     assert data["version"] == "1.0.0"
     assert "endpoints" in data
     assert data["endpoints"]["health"] == "/health"
@@ -38,5 +38,5 @@ def test_openapi_yaml_endpoint(test_client):
     content = response.text
     assert "openapi:" in content
     assert "info:" in content
-    assert "title: Consumer Complaints Classification System API" in content
+    assert "title: Video Violence Detection System API" in content
     assert "paths:" in content

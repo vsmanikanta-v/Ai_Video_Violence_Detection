@@ -1,4 +1,4 @@
-"""Consumer Complaints Classification System FastAPI Application.
+"""Video Violence Detection System FastAPI Application.
 
 Main application entry point with OpenAPI configuration,
 endpoint registration, and middleware setup.
@@ -12,7 +12,7 @@ from fastapi.responses import PlainTextResponse
 
 # Initialize FastAPI app with OpenAPI metadata
 app = FastAPI(
-    title="Consumer Complaints Classification System API",
+    title="Video Violence Detection System API",
     description=(
         "RAG-based policy query system with OpenAI and Qdrant. "
         "Enables semantic search of enterprise policy documents with "
@@ -72,7 +72,7 @@ app.include_router(auth.router)
                 "application/json": {
                     "example": {
                         "status": "ok",
-                        "message": "Consumer Complaints Classification System API",
+                        "message": "Video Violence Detection System API",
                         "version": "1.0.0",
                         "endpoints": {
                             "health": "/health",
@@ -94,7 +94,7 @@ async def root() -> dict:
     """
     return {
         "status": "ok",
-        "message": "Consumer Complaints Classification System API",
+        "message": "Video Violence Detection System API",
         "version": "1.0.0",
         "endpoints": {
             "health": "/health",

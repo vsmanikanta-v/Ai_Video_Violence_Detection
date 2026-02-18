@@ -1,6 +1,6 @@
 # Ai-Video-Violence-Detection - Backend
 
-FastAPI backend with 6 core endpoints for the Consumer Complaints Classification System RAG application.
+FastAPI backend with 6 core endpoints for the Video Violence Detection System RAG application.
 
 ## 🎯 Endpoints Implemented
 
@@ -127,7 +127,7 @@ Response:
 ```json
 {
   "status": "ok",
-  "message": "Consumer Complaints Classification System API",
+  "message": "Video Violence Detection System API",
   "version": "1.0.0",
   "endpoints": {
     "health": "/health",

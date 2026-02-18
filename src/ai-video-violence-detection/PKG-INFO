@@ -76,7 +76,7 @@ An intelligent `N-Tier enterprise application` that automatically classifies con
 
 ## 📌 Abstract
 
-Consumer-facing organizations receive massive volumes of textual complaints through digital platforms. Manual classification of these complaints is inefficient, inconsistent, and hard to scale. This project presents an **AI-Based Consumer Complaints Classification System** that leverages **Machine Learning (ML)** and **Natural Language Processing (NLP)** to automatically categorize complaints into classes like Billing, Service, or Delivery.
+Consumer-facing organizations receive massive volumes of textual complaints through digital platforms. Manual classification of these complaints is inefficient, inconsistent, and hard to scale. This project presents an **AI-Based Video Violence Detection System** that leverages **Machine Learning (ML)** and **Natural Language Processing (NLP)** to automatically categorize complaints into classes like Billing, Service, or Delivery.
 
 Uniquely, a **Generative AI module (Google Gemini)** is integrated as a post-classification layer to generate human-readable explanations for the model's decisions, improving transparency and trust ("Explainable AI"). The system implements a robust **Enterprise N-Tier Architecture** ensuring scalability and maintainability.
 
