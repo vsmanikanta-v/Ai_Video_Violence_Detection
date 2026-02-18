@@ -14,7 +14,7 @@ jobs:
     steps:
       - name: Placeholder
         run: |
-          echo "This workflow is disabled for consumer-complaints-ml-genai-ntier repository"
+          echo "This workflow is disabled for Video Violence Detection System-complaints-ml-genai-ntier repository"
           echo "API testing approach:"
           echo "  - Backend: pytest for Flask REST API tests"
           echo "  - ML Pipeline: Unit tests for classification and preprocessing"
