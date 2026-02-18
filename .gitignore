@@ -438,7 +438,8 @@ src/frontend/.env.test.local
 src/frontend/.env.production.local
 
 # Database files
-database/
 *.db
 *.sqlite
 *.sqlite3
+*.egg
+*.egg-info/
