@@ -4,32 +4,18 @@ Handles user registration, login, and profile retrieval.
 Integrates with PostgreSQL database for user storage.
 """
 
+import logging
+
 import psycopg2
-from app.config import settings
+from app.db import get_db_connection
 from app.models.auth import User
 from app.utils.password import hash_password, verify_password
 from fastapi import HTTPException, status
 
-
-def get_db_connection():
-    """Create a database connection.
-
-    Returns:
-        psycopg2 connection object
-
-    Raises:
-        HTTPException: 503 if database connection fails
-    """
-    try:
-        conn = psycopg2.connect(settings.database_url)
-        return conn
-    except psycopg2.Error as e:
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=f"Database connection failed: {str(e)}"
-        )
+logger = logging.getLogger(__name__)
 
 
-async def register_user(username: str, email: str, password: str, role: str) -> User:
+def register_user(username: str, email: str, password: str, role: str) -> User:
     """Register a new user account.
 
     Args:
@@ -45,10 +31,11 @@ async def register_user(username: str, email: str, password: str, role: str) -> 
         HTTPException: 409 if username or email already exists
         HTTPException: 503 if database operation fails
     """
-    conn = get_db_connection()
-    cursor = conn.cursor()
-
+    conn = None
+    cursor = None
     try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
         # Hash the password
         password_hash = hash_password(password)
 
@@ -72,27 +59,28 @@ async def register_user(username: str, email: str, password: str, role: str) -> 
 
         return user
 
-    except psycopg2.errors.UniqueViolation as e:
-        conn.rollback()
-        if "username" in str(e):
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail="Username already exists",
-                headers={"error_code": "USER_001"},
-            )
-        else:
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT, detail="Email already exists", headers={"error_code": "USER_002"}
-            )
+    except psycopg2.errors.UniqueViolation:
+        if conn:
+            conn.rollback()
+        # Generic message to prevent user enumeration (OWASP)
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="User already exists",
+            headers={"error_code": "USER_CONFLICT"},
+        )
     except psycopg2.Error as e:
-        conn.rollback()
-        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=f"Database error: {str(e)}")
+        if conn:
+            conn.rollback()
+        logger.error("Database error in register_user: %s", e)
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Database error")
     finally:
-        cursor.close()
-        conn.close()
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
 
 
-async def authenticate_user(username: str, password: str) -> User | None:
+def authenticate_user(username: str, password: str) -> User | None:
     """Authenticate a user with username and password.
 
     Args:
@@ -105,10 +93,11 @@ async def authenticate_user(username: str, password: str) -> User | None:
     Raises:
         HTTPException: 503 if database operation fails
     """
-    conn = get_db_connection()
-    cursor = conn.cursor()
-
+    conn = None
+    cursor = None
     try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
         # Get user from database
         cursor.execute(
             """
@@ -136,13 +125,16 @@ async def authenticate_user(username: str, password: str) -> User | None:
         return user
 
     except psycopg2.Error as e:
-        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=f"Database error: {str(e)}")
+        logger.error("Database error in authenticate_user: %s", e)
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Database error")
     finally:
-        cursor.close()
-        conn.close()
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
 
 
-async def get_user_by_id(user_id: int) -> User | None:
+def get_user_by_id(user_id: int) -> User | None:
     """Get user by ID.
 
     Args:
@@ -154,10 +146,11 @@ async def get_user_by_id(user_id: int) -> User | None:
     Raises:
         HTTPException: 503 if database operation fails
     """
-    conn = get_db_connection()
-    cursor = conn.cursor()
-
+    conn = None
+    cursor = None
     try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
         # Get user from database
         cursor.execute(
             """
@@ -181,7 +174,10 @@ async def get_user_by_id(user_id: int) -> User | None:
         return user
 
     except psycopg2.Error as e:
-        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=f"Database error: {str(e)}")
+        logger.error("Database error in get_user_by_id: %s", e)
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Database error")
     finally:
-        cursor.close()
-        conn.close()
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()

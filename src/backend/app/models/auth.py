@@ -50,7 +50,9 @@ class RegisterRequest(BaseModel):
     password: str = Field(
         ..., min_length=8, max_length=100, description="Password (minimum 8 characters)", examples=["SecurePass123!"]
     )
-    role: Literal["USER", "ADMIN"] = Field(default="USER", description="User role", examples=["USER"])
+    role: Literal["USER"] = Field(
+        default="USER", description="User role (always USER for self-registration)", examples=["USER"]
+    )
 
 
 class LoginRequest(BaseModel):
@@ -77,15 +79,3 @@ class AuthResponse(BaseModel):
     user: User = Field(..., description="User information")
     access_token: str = Field(..., description="JWT access token", examples=["eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."])
     token_type: str = Field(default="bearer", description="Token type", examples=["bearer"])
-
-
-class ErrorResponse(BaseModel):
-    """Standard error response model.
-
-    Attributes:
-        detail: Error message
-        error_code: Optional error code for programmatic handling
-    """
-
-    detail: str = Field(..., description="Error message", examples=["Invalid credentials"])
-    error_code: str | None = Field(None, description="Error code", examples=["AUTH_001"])

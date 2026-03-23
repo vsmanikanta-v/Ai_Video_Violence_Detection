@@ -2,6 +2,8 @@
 
 **AI Video Violence Detection System Using CNN-LSTM and Generative AI**
 
+> **Implementation note:** The live backend is **FastAPI**. Incident explanations use **Google Gemini** (`google.genai`, `GEMINI_API_KEY`); without a key the API returns **mock** explanations (same contract).
+
 ---
 
 ## **A. PROJECT OVERVIEW (Questions 1-10)**
@@ -21,7 +23,7 @@ Manual monitoring of surveillance systems is inefficient, prone to human error, 
 ### **3. What are the main components of your system?**
 
 1. **React.js Frontend** - User interface for video upload and result visualization
-2. **Flask REST API Backend** - Application logic and request orchestration
+2. **FastAPI REST API Backend** - Application logic and request orchestration
 3. **CNN-LSTM ML Model** - Deep learning for violence detection
 4. **GenAI Service** - Incident explanation generation
 5. **PostgreSQL Database** - Data persistence and audit logging
@@ -75,7 +77,7 @@ It does **not** analyze video pixels directly. The CNN-LSTM handles video analys
 
 **N-Tier Architecture** with clear separation of concerns:
 - **Presentation Layer**: React.js frontend
-- **Application Layer**: Flask REST API
+- **Application Layer**: FastAPI REST API
 - **ML Processing Layer**: CNN-LSTM inference
 - **GenAI Service Layer**: Incident explanation
 - **Data Layer**: PostgreSQL database
@@ -100,8 +102,8 @@ N-Tier architecture provides:
 
 **Input:**
 - Short surveillance video clips (30-60 seconds)
-- Supported formats: MP4, AVI, MOV
-- Maximum file size: 50MB (configurable)
+- Supported formats: MP4, AVI, MOV, WebM, MKV
+- Maximum file size: 2 MB (configurable via `max_upload_size_mb`)
 
 **Output:**
 - Violence probability score (0.0-1.0)
@@ -124,7 +126,7 @@ N-Tier architecture provides:
 3. **Feature Maps**: Hierarchical representation of visual information
 4. **Output**: High-dimensional feature vector representing frame content
 
-We use **pre-trained CNN** (transfer learning) to leverage features learned from ImageNet.
+We use a **custom lightweight CNN built from scratch** (two `TimeDistributed Conv2D` layers: 16 then 32 filters, 3×3 ReLU, each followed by MaxPool2D, then GlobalAveragePooling2D). No pre-trained ImageNet backbone is used — training from scratch keeps the model small, CPU-friendly, and fully controllable.
 
 ---
 
@@ -142,17 +144,19 @@ LSTM captures **how the scene changes over time**, essential for violence detect
 
 ---
 
-### **13. What is transfer learning and why did you use it?**
+### **13. Did you use transfer learning? Why or why not?**
 
 **Transfer Learning**: Using a pre-trained model as a starting point rather than training from scratch.
 
-**Why we used it:**
-- CNN pre-trained on ImageNet already learned general visual features
-- Reduces training time and computational requirements
-- Improves performance with limited training data
-- Enables CPU-only inference without extensive training
+**No — we did not use transfer learning in this project.**
 
-**Implementation**: We use pre-trained CNN (e.g., ResNet, MobileNet) as feature extractor.
+**Why we chose training from scratch:**
+- The dataset is small (labeled short video clips) and domain-specific — ImageNet features may not transfer well
+- Training from scratch keeps the model lightweight (Conv2D 16→32 filters, LSTM 64 units) and CPU-trainable in minutes
+- Reduces external dependencies (no large pre-trained weight files to download)
+- Academic transparency — every parameter in the model was learned on our own data
+
+**Trade-off**: A larger dataset with a ResNet or MobileNet backbone would likely yield higher accuracy; the current design prioritises resource efficiency and academic clarity over benchmark performance.
 
 ---
 
@@ -161,7 +165,7 @@ LSTM captures **how the scene changes over time**, essential for violence detect
 **Training:**
 - Learning process where model adjusts weights based on labeled data
 - Requires large datasets, GPU acceleration, significant time
-- Not performed in our project (inference-only)
+- Not performed at runtime — training is done offline via `train.py` using the clips in `src/backend/data/`
 
 **Inference:**
 - Using a pre-trained model to make predictions on new data
@@ -173,17 +177,18 @@ LSTM captures **how the scene changes over time**, essential for violence detect
 
 ---
 
-### **15. Why inference-only? Why not train your own model?**
+### **15. Why inference-only in production? How is the model trained?**
 
-**Reasons for inference-only approach:**
+**The project includes an offline training script** (`src/backend/app/ml/train.py`) that builds and trains the CNN-LSTM model from scratch on labelled video clips. Training runs on CPU with `tensorflow-cpu`. At runtime, only inference is performed for efficiency.
 
-1. **Academic Feasibility**: Training requires GPU infrastructure not always available
-2. **Time Constraints**: Training deep learning models takes days/weeks
-3. **Dataset Availability**: Large labeled violence datasets are limited
-4. **Project Focus**: Emphasis on system integration and architecture
-5. **CPU Compatibility**: Inference can run on CPU; training cannot practically
+**Reasons for separating training from the runtime path:**
 
-**Trade-off**: Use pre-trained models optimized for general action recognition.
+1. **Deployment Simplicity**: Production deployment needs only the trained `.keras` model file, reducing runtime dependencies
+2. **Resource Efficiency**: Inference is lightweight and runs on CPU; training is a one-time offline step
+3. **Architectural Clarity**: Clear separation between the training pipeline (offline) and the inference pipeline (online)
+4. **Reproducibility**: Training can be re-run with different data or hyperparameters independently of the application
+
+**Trade-off**: A larger dataset with a ResNet or MobileNet backbone would likely yield higher accuracy; the current design prioritises resource efficiency, full architectural control, and academic transparency over benchmark performance.
 
 ---
 
@@ -192,7 +197,7 @@ LSTM captures **how the scene changes over time**, essential for violence detect
 **Video Preprocessing Pipeline:**
 
 1. **Frame Extraction**: Extract frames at uniform temporal intervals (e.g., 1 frame per second)
-2. **Frame Resizing**: Resize to CNN input dimensions (e.g., 224×224 pixels)
+2. **Frame Resizing**: Resize to CNN input dimensions (64×64, configured via `model_input_size`)
 3. **Normalization**: Scale pixel values to [0, 1] range
 4. **Channel Ordering**: Ensure RGB channel format
 5. **Sequence Creation**: Create fixed-length sequences for LSTM input
@@ -204,13 +209,13 @@ LSTM captures **how the scene changes over time**, essential for violence detect
 
 ### **17. What is your model's input shape?**
 
-**CNN Input**: (224, 224, 3) - Height × Width × Channels (RGB)
+**CNN Input**: (64, 64, 3) - Height × Width × Channels (RGB)
 
 **LSTM Input**: (sequence_length, feature_dim)
 - `sequence_length`: Number of frames (e.g., 30 frames)
-- `feature_dim`: CNN feature vector size (e.g., 512 or 2048 dimensions)
+- `feature_dim`: CNN feature vector size — **32** (output of `TimeDistributed GlobalAveragePooling2D` on `Conv2D(32)`)
 
-**Example**: For 30-second video at 1 fps → 30 frames → LSTM input shape (30, 512)
+**Example**: For 30-second video at 1 fps → 30 frames → LSTM input shape (30, 32)
 
 ---
 
@@ -271,7 +276,7 @@ Actual Non-Violent     FP                    TN
 - **Data Augmentation**: Artificially increase training data variety
 - **Early Stopping**: Stop training when validation performance degrades
 
-**Our project**: Uses pre-trained models, so overfitting handled during original training.
+**Our project**: Uses a custom CNN trained from scratch; overfitting is controlled via dataset balance and early stopping during training.
 
 ---
 
@@ -284,9 +289,9 @@ Actual Non-Violent     FP                    TN
 **Post-Processing:**
 - **Threshold**: Apply threshold (e.g., 0.5) for binary classification
 - **Confidence Mapping**:
-  - Score ≥ 0.75 → HIGH confidence
-  - 0.50 ≤ Score < 0.75 → MEDIUM confidence
-  - Score < 0.50 → LOW confidence
+  - Score ≥ 0.8 or Score ≤ 0.2 → HIGH confidence (strong positive or strong negative detection)
+  - Score ≥ 0.6 or Score ≤ 0.4 → MEDIUM confidence (moderate evidence)
+  - 0.4 < Score < 0.6 → LOW confidence (uncertain/ambiguous)
 - **Classification**: VIOLENT if score ≥ threshold, else NON_VIOLENT
 
 ---
@@ -313,8 +318,8 @@ Actual Non-Violent     FP                    TN
 - **Pillow (PIL)**: Image processing
 
 **Backend:**
-- **Flask**: REST API framework
-- **SQLAlchemy**: Database ORM
+- **FastAPI**: REST API framework
+- **psycopg2**: Direct SQL database access (no ORM)
 
 **Frontend:**
 - **React**: UI framework
@@ -328,7 +333,7 @@ Actual Non-Violent     FP                    TN
 
 **Optimizations for CPU:**
 - Inference-only (no training)
-- Lightweight CNN architectures (e.g., MobileNet)
+- Custom lightweight CNN built from scratch (Conv2D 16→32 filters, no pretrained weights)
 - Frame sampling (process fewer frames)
 - TensorFlow CPU optimization flags
 - Offline processing (not real-time)
@@ -385,24 +390,21 @@ GenAI operates as a **post-processing layer**:
 **Incident Explanation Prompt Structure:**
 
 ```
-Role: You are an expert security incident analyst specializing in 
-surveillance analysis.
+You are a security analyst assistant. Produce a short, professional incident
+report for a video violence detection system. Be factual and concise.
 
-Task: Generate a professional incident report based on violence 
-detection results.
-
-Detection Results:
-- Violence Score: 0.87
+Detection result:
+- Violence score: 0.87 (0.0 = none, 1.0 = maximum)
 - Prediction: VIOLENT
-- Confidence: HIGH
-- Key Frames: 12s, 18s, 25s, 32s
+- Confidence level: HIGH
+- Key frame timestamps (seconds): 12, 18, 25, 32
+- Processing time: 8.5s
 
-Format Requirements:
-- Clear incident summary (1-2 sentences)
-- Explain confidence level
-- Describe temporal aspects
-- Provide security recommendations
-- Use professional, objective language
+Task: The video was classified as VIOLENT with HIGH confidence. Write a short
+incident report (2–4 sentences): summary, key timestamps if any, and
+recommended follow-up.
+
+Output only the report text, no preamble.
 ```
 
 **Adaptation**: Prompt changes based on confidence level (HIGH/MEDIUM/LOW).
@@ -413,17 +415,17 @@ Format Requirements:
 
 **Confidence-Aware Explanation Strategy:**
 
-**HIGH Confidence (≥75%):**
+**HIGH Confidence (score ≥ 80% or ≤ 20%):**
 - Definitive language: "Violent incident detected with high confidence"
 - Strong action recommendations: "Immediate review recommended"
 - Specific details about detection
 
-**MEDIUM Confidence (50-74%):**
+**MEDIUM Confidence (score ≥ 60% or ≤ 40%):**
 - Cautious language: "Potential violent activity detected"
 - Manual review emphasis: "Manual verification strongly recommended"
 - Acknowledgment of uncertainty
 
-**LOW Confidence (<50%):**
+**LOW Confidence (40% < score < 60%):**
 - Explicit uncertainty: "Possible violent activity with low confidence"
 - False positive warning: "May be a false positive"
 - Verification priority: "Thorough review required before action"
@@ -434,10 +436,9 @@ Format Requirements:
 
 **Error Handling Strategy:**
 
-1. **Retry Logic**: Automatic retry with exponential backoff for transient failures
-2. **Fallback Explanation**: Generate basic template-based explanation if API unavailable
-3. **Error Logging**: Log failures for debugging and monitoring
-4. **User Notification**: Inform user that detailed explanation unavailable
+1. **Fallback Explanation**: Generate basic template-based explanation if API unavailable
+2. **Error Logging**: Log failures for debugging and monitoring
+3. **User Notification**: Inform user that detailed explanation unavailable
 5. **Detection Results Preserved**: Core detection results saved regardless of GenAI status
 
 **Graceful Degradation**: System remains functional even if GenAI service fails.
@@ -452,7 +453,7 @@ Format Requirements:
 2. **Structured Prompts**: Well-defined prompts reduce hallucination risk
 3. **Factual Grounding**: Prompts include only verified detection data
 4. **Output Validation**: Check generated explanations for required components
-5. **Temperature Control**: Lower temperature (0.3-0.5) for more factual outputs
+5. **Factual Prompts Only**: Prompts contain only verified ML detection data (score, prediction, confidence, timestamps)
 6. **Human Review**: System designed for human verification of critical incidents
 
 **Note**: Explanations describe **detection results**, not absolute ground truth.
@@ -555,22 +556,20 @@ Format Requirements:
 
 **Authentication Flow:**
 
-1. **Registration**: User provides email and password
-   - Password hashed with bcrypt
+1. **Registration**: User provides username, email, and password
+   - Password hashed with bcrypt (12 rounds, `$2b$`)
    - User created with default USER role
 
 2. **Login**: User submits credentials
-   - Verify email exists
+   - Verify username exists
    - Verify password hash matches
-   - Generate JWT access token (expiry: 1 hour)
+   - Generate JWT access token (expiry: 30 minutes)
    - Return token to frontend
 
 3. **Authenticated Requests**: Frontend includes JWT in Authorization header
    - Backend verifies token signature
    - Extracts user_id and role from token
    - Grants/denies access based on role
-
-4. **Token Refresh**: Refresh token extends session without re-login
 
 ---
 
@@ -586,7 +585,7 @@ Format Requirements:
 4. **Open Source**: Free, widely supported, well-documented
 5. **Scalability**: Handles growing data volumes
 6. **Industry Standard**: Proven in production environments
-7. **SQLAlchemy Support**: Excellent Python ORM integration
+7. **Driver Support**: psycopg2 provides efficient low-level PostgreSQL access
 
 **Alternatives Considered**: MySQL, SQLite (insufficient for production), MongoDB (NoSQL not needed).
 
@@ -597,37 +596,35 @@ Format Requirements:
 **Four Main Tables:**
 
 **`users`**: Authentication and authorization
-- `id`, `email`, `password_hash`, `role`, `created_at`
+- `id`, `username`, `email`, `password_hash`, `role`, `created_at`
 
 **`videos`**: Video metadata
-- `id`, `user_id` (FK), `filename`, `file_path`, `file_size`, `uploaded_at`
+- `id`, `user_id` (FK), `filename`, `file_path`, `file_size`, `duration_seconds`, `video_format`, `uploaded_at`
 
 **`results`**: Detection results
-- `id`, `video_id` (FK), `violence_score`, `prediction`, `confidence_level`, `genai_explanation`, `processing_time`, `created_at`
+- `id`, `video_id` (FK), `violence_score`, `prediction`, `confidence_level`, `genai_summary`, `key_frame_timestamps`, `processing_time_seconds`, `created_at`
 
 **`audit_logs`**: System audit trail
-- `id`, `user_id` (FK), `action`, `resource_type`, `resource_id`, `ip_address`, `timestamp`
+- `id`, `user_id` (FK), `action`, `entity_type`, `entity_id`, `request_context_id`, `details`, `created_at`
 
 **Relationships**: One-to-many (user→videos, video→result).
 
 ---
 
-### **41. What is an ORM and why use SQLAlchemy?**
+### **41. Why did you use psycopg2 for database access instead of an ORM?**
 
-**ORM (Object-Relational Mapping)**: Maps database tables to Python classes and rows to objects.
+**psycopg2** is a low-level PostgreSQL adapter for Python that executes raw SQL directly, without an ORM abstraction layer.
 
-**Benefits:**
-- Write Python code instead of raw SQL
-- Type safety and IDE autocompletion
-- Database-agnostic code (easier to switch databases)
-- Automatic SQL injection prevention
-- Built-in query optimization
+**Reasons for choosing direct SQL:**
+- Full control over SQL queries and query plans
+- No ORM overhead or abstraction complexity
+- Transparent, auditable SQL for academic review
+- Parameterized queries provide built-in SQL injection prevention
+- Lightweight: no additional ORM dependency required
 
-**SQLAlchemy**: Most popular Python ORM
-- Mature and well-tested
-- Excellent documentation
-- Flask integration via Flask-SQLAlchemy
-- Supports complex queries and relationships
+**ORM (Object-Relational Mapping)** such as SQLAlchemy maps tables to Python classes, which adds convenience but also complexity. For this project, direct SQL via psycopg2 is simpler, more transparent, and sufficient for the schema size.
+
+**Connection Management**: psycopg2 connections are managed per-request and closed after use to prevent resource leaks.
 
 ---
 
@@ -654,14 +651,20 @@ Format Requirements:
 
 **CORS (Cross-Origin Resource Sharing)**: Browser security feature that restricts web pages from making requests to different domains.
 
-**Problem**: React frontend (localhost:3000) calling Flask backend (localhost:5000) = different origins
+**Problem**: React frontend (localhost:3000/5173) calling FastAPI backend (e.g. localhost:8000) = different origins
 
-**Solution**: Configure Flask backend to allow requests from frontend origin
+**Solution**: Configure FastAPI backend to allow requests from frontend origin (CORSMiddleware)
 
 **Implementation**:
 ```python
-from flask_cors import CORS
-CORS(app, origins=["http://localhost:3000"])
+from fastapi.middleware.cors import CORSMiddleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.cors_allowed_origins,
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type", "X-Request-ID"],
+)
 ```
 
 **Production**: Configure specific allowed origins (not wildcard `*`).
@@ -696,7 +699,7 @@ CORS(app, origins=["http://localhost:3000"])
 **Detection Workflow:**
 
 1. **Trigger**: User clicks "Analyze" on uploaded video
-2. **API Request**: POST to `/api/detections/analyze` with `video_id`
+2. **API Request**: POST to `/api/videos/{video_id}/analyze`
 3. **Backend Orchestration**:
    - Retrieve video file path from database
    - **ML Inference**:
@@ -772,14 +775,13 @@ CORS(app, origins=["http://localhost:3000"])
 - HTTP status codes (400 Bad Request, 401 Unauthorized, 500 Server Error)
 
 **Frontend:**
-- Axios interceptors for global error handling
+- Custom fetch wrapper (`client.ts`) with `handleResponse<T>()` for global error handling
 - Display user-friendly error messages
 - Loading states during async operations
 - Graceful degradation (show partial data if possible)
 
 **ML/GenAI Failures:**
-- Retry logic with exponential backoff
-- Fallback mechanisms
+- Fallback mock explanations when API unavailable
 - User notification of service degradation
 
 ---
@@ -789,8 +791,8 @@ CORS(app, origins=["http://localhost:3000"])
 **Security Measures:**
 
 1. **Authentication**: JWT tokens prevent unauthorized access
-2. **Password Security**: Bcrypt hashing (not plaintext storage)
-3. **SQL Injection**: Parameterized queries via SQLAlchemy
+2. **Password Security**: bcrypt hashing (12 rounds, `$2b$`) — no plaintext storage
+3. **SQL Injection**: Parameterized queries via psycopg2
 4. **XSS (Cross-Site Scripting)**: Input sanitization and React's built-in protection
 5. **API Key Protection**: Environment variables (never committed to git)
 6. **CORS**: Restricted to specific origins
@@ -799,7 +801,7 @@ CORS(app, origins=["http://localhost:3000"])
 9. **Audit Logging**: Track all sensitive operations
 10. **HTTPS**: Required in production
 
-**Future**: Rate limiting, CSRF protection, input validation library.
+**Future**: CSRF protection, advanced input validation library. (Rate limiting is already implemented — endpoints are protected via `ratelimit_video_upload` and `ratelimit_video_analysis` configuration.)
 
 ---
 
@@ -813,8 +815,8 @@ CORS(app, origins=["http://localhost:3000"])
 - Configure environment variables (API URL)
 
 **Backend:**
-- Deploy Flask app to cloud platform (AWS EC2, Azure App Service, Heroku)
-- Use production WSGI server (Gunicorn, uWSGI) instead of Flask dev server
+- Deploy FastAPI app to cloud platform (AWS EC2, Azure App Service, Heroku)
+- Use production ASGI server (Uvicorn, Gunicorn + uvicorn workers) instead of dev server
 - Configure environment variables securely (AWS Secrets Manager, Azure Key Vault)
 - Set up database connection pooling
 
@@ -839,11 +841,11 @@ CORS(app, origins=["http://localhost:3000"])
 
 **Challenge 1: CPU Performance**
 - **Issue**: Deep learning inference slow on CPU
-- **Solution**: Used lighter models (MobileNet), frame sampling, TensorFlow CPU optimizations
+- **Solution**: Custom lightweight CNN trained from scratch, frame sampling, TensorFlow CPU optimizations
 
 **Challenge 2: GenAI API Integration**
 - **Issue**: External API dependency, potential failures
-- **Solution**: Implemented retry logic, fallback mechanisms, comprehensive error handling
+- **Solution**: Fallback mock explanations, comprehensive error handling, user-friendly failure messages
 
 **Challenge 3: Video File Management**
 - **Issue**: Large files, storage, retrieval
@@ -920,7 +922,7 @@ CORS(app, origins=["http://localhost:3000"])
 1. **Offline Processing**: Not real-time (8-15 seconds per video)
 2. **Short Videos**: Designed for 30-60 second clips, not hours of footage
 3. **Binary Classification**: Only violent/non-violent (not violence types)
-4. **Pre-trained Models**: Accuracy depends on original training data
+4. **Custom-Trained Model**: Accuracy depends on training dataset quality and size
 5. **CPU Performance**: Slower than GPU-accelerated systems
 6. **GenAI Dependency**: Requires external API (cost, availability)
 7. **No Weapon Detection**: Doesn't identify specific weapons or objects
@@ -994,7 +996,7 @@ CORS(app, origins=["http://localhost:3000"])
 
 1. **Start with Architecture**: Plan N-Tier structure before coding
 2. **Choose Realistic Scope**: Don't try to build everything at once
-3. **Use Pre-Trained Models**: Don't train from scratch for academic projects
+3. **Evaluate Transfer Learning**: Training from scratch gives full control; for larger datasets, a pre-trained backbone (ResNet/MobileNet) can improve accuracy with less data
 4. **Test Early and Often**: Catch issues early
 5. **Document as You Go**: Don't leave documentation to the end
 6. **Version Control**: Use Git from day one
@@ -1005,7 +1007,7 @@ CORS(app, origins=["http://localhost:3000"])
 
 **Resources:**
 - TensorFlow/Keras documentation
-- Flask official docs
+- FastAPI official docs
 - React documentation
 - Stack Overflow (for debugging)
 - Academic papers (for ML understanding)
@@ -1081,7 +1083,7 @@ CORS(app, origins=["http://localhost:3000"])
 - Faster training
 - Better performance with limited data
 
-**Our Implementation**: Use pre-trained CNN (ResNet/MobileNet) as spatial feature extractor.
+**Our Implementation**: Custom CNN built from scratch (two `TimeDistributed Conv2D` layers, 16→32 filters, GlobalAveragePooling2D → feature dim 32), followed by LSTM 64 units. No transfer learning or pretrained weights.
 
 ---
 
@@ -1161,7 +1163,7 @@ CORS(app, origins=["http://localhost:3000"])
 - Reduces internal covariate shift
 - Mild regularization effect
 
-**Our Project**: Pre-trained models likely include batch normalization layers from original training.
+**Our Project**: The CNN-LSTM is trained from scratch; the architecture does not include batch normalization layers. The model uses Conv2D with ReLU activation followed by MaxPooling and GlobalAveragePooling2D.
 
 ---
 
@@ -1186,7 +1188,7 @@ CORS(app, origins=["http://localhost:3000"])
 
 6. **Evaluation Metrics**: Use precision-recall instead of accuracy
 
-**Our Project**: Pre-trained models handle this during original training.
+**Our Project**: The CNN-LSTM is trained from scratch using class weights to handle imbalance. In `train.py`, class weights are computed dynamically based on label distribution, assigning higher loss weight to the minority class.
 
 ---
 

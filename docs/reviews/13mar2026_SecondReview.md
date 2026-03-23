@@ -1,5 +1,7 @@
 # AI Video Violence Detection System - Presentation Outline
 
+**Last reviewed:** March 16, 2026 — API slide updated: video, detections, and admin endpoints are implemented; paths aligned with `docs/reference/api-surface.md`. React 19.2.
+
 ---
 
 ## Slide 1: Title Slide
@@ -191,21 +193,23 @@ Instead of replicating a single research paper, the project integrates **multipl
 
 ### Frontend
 
-* React.js (TypeScript)
+* React 19.2 (TypeScript)
+* Redux Toolkit (state management)
 * Tailwind CSS
+* Vite (build tool)
 * Video upload interface, detection results, history, admin dashboard
 
 ### Backend
 
 * FastAPI (Python 3.12)
 * REST API Architecture
-* SQLAlchemy ORM
+* psycopg2 (direct parameterized SQL)
 
 ### ML & AI
 
 * TensorFlow / Keras (CNN + LSTM)
 * OpenCV (video preprocessing, frame extraction)
-* GenAI API (Google Gemini / OpenAI for incident explanations)
+* GenAI API (**Google Gemini** — `google-genai`, `GEMINI_API_KEY`; mock if unset)
 
 ### Data & Security
 
@@ -346,36 +350,49 @@ Authorization: Bearer <JWT>
 
 The backend exposes a **RESTful API** implemented using **FastAPI**.
 
-API endpoints are documented with **Swagger UI** at `/api/docs`, **ReDoc** at `/redoc`, and **OpenAPI YAML** at `/api/openapi.yaml` for easy testing and integration.
+API endpoints are documented with **Swagger UI** at `/api/docs`, **ReDoc** at `/redoc`, **OpenAPI JSON** at `/openapi.json`, and **OpenAPI YAML** at `/api/openapi.yaml` when the backend is running. See also `docs/reference/api-surface.md`.
 
-#### Currently Implemented
+#### System
 
 ```
 GET  /                         API root and metadata
 GET  /health                   Health check
-GET  /api/openapi.yaml         OpenAPI 3.1 specification (YAML)
-POST /api/auth/register        Register (username, email, password, role)
-POST /api/auth/login           Login (username, password)
+GET  /api/openapi.yaml         OpenAPI specification (YAML)
+```
+
+#### Authentication
+
+```
+POST /api/auth/register       Register (username, email, password, role: USER only)
+POST /api/auth/login          Login (username, password)
 GET  /api/auth/me              Current user (requires JWT)
+GET  /api/auth/admin-check     Admin role verification (requires JWT)
 ```
 
-#### Designed (to be implemented)
-
-#### Video & Detection
+#### Videos (implemented)
 
 ```
-POST /api/videos/upload       Upload video (multipart/form-data; requires JWT)
-GET  /api/videos/history      Get user's video history (pagination)
-GET  /api/detections/{video_id}  Get detection result for a video (requires JWT)
+POST /api/videos/upload           Upload video (multipart/form-data; requires JWT; rate limited)
+POST /api/videos/{video_id}/analyze  Run violence detection on uploaded video
+GET  /api/videos/history             List current user's videos
+GET  /api/videos/{video_id}        Get video metadata and results (user must own video)
 ```
 
-#### Admin APIs
+#### Detections (implemented)
 
 ```
-GET  /api/admin/summary       System summary metrics (Admin only)
+GET  /api/detections/result/{result_id}  Get detection by result ID (user must own video)
+GET  /api/detections/video/{video_id}     List detections for a video (user must own video)
 ```
 
-#### Benefits of Swagger
+#### Admin (implemented)
+
+```
+GET  /api/admin/stats          Aggregate counts (users, videos, results, audit logs) — Admin only
+GET  /api/admin/audit-logs     List audit log entries (paginated; limit, offset) — Admin only
+```
+
+#### Benefits of Swagger / OpenAPI
 
 * Interactive API testing
 * Automatic API documentation
@@ -393,7 +410,7 @@ User uploads a short video clip (e.g. 30–60 seconds) via the React interface.
 
 2️⃣ **Preprocessing**
 
-Frame extraction (OpenCV), resizing (e.g. 224×224), normalization.
+Frame extraction (OpenCV), resizing (64×64), normalization.
 
 3️⃣ **ML Inference**
 
@@ -415,10 +432,10 @@ Result and GenAI summary are stored in **PostgreSQL**; full response returned to
 
 #### CNN-LSTM Pipeline
 
-* **CNN:** Spatial feature extraction from video frames (e.g. 224×224×3).
+* **CNN:** Spatial feature extraction from video frames (64×64×3).
 * **LSTM:** Temporal pattern recognition over frame sequences.
 * **Output:** Violence probability (0.0–1.0), classification, confidence level.
-* **Inference-only:** Pre-trained model; no local training; CPU-optimized.
+* **Inference-only:** Custom CNN-LSTM model; supports local training via `train.py`; CPU-optimized.
 
 #### GenAI for Explanations
 

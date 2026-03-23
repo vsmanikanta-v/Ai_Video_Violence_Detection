@@ -16,7 +16,7 @@ from jose import JWTError, jwt
 security = HTTPBearer()
 
 
-def create_access_token(data: dict) -> str:
+def create_access_token(data: dict[str, object]) -> str:
     """Create a JWT access token with expiration.
 
     Args:
@@ -37,7 +37,7 @@ def create_access_token(data: dict) -> str:
     return encoded_jwt
 
 
-def verify_access_token(token: str) -> dict:
+def verify_access_token(token: str) -> dict[str, object]:
     """Verify and decode a JWT access token.
 
     Args:
@@ -81,8 +81,16 @@ async def get_current_user_id(credentials: Annotated[HTTPAuthorizationCredential
     """
     token = credentials.credentials
     payload = verify_access_token(token)
-    user_id: int | None = payload.get("user_id")
-    if user_id is None:
+    raw_user_id = payload.get("user_id")
+    if raw_user_id is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid authentication token",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    try:
+        user_id = int(raw_user_id)
+    except (TypeError, ValueError):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid authentication token",

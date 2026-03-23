@@ -1,13 +1,19 @@
-"""Authentication router for user registration, login, and profile management."""
+"""Authentication router for user registration, login, profile management, and RBAC."""
 
 from typing import Annotated
 
+from app.deps import require_admin
 from app.models.auth import AuthResponse, LoginRequest, RegisterRequest, User
 from app.services.auth_service import authenticate_user, get_user_by_id, register_user
 from app.utils.jwt_handler import create_access_token, get_current_user_id
 from fastapi import APIRouter, Depends, HTTPException, status
 
 router = APIRouter(prefix="/api/auth", tags=["Authentication"])
+
+
+def _build_auth_token(user: User) -> str:
+    """Build JWT access token payload from a user instance."""
+    return create_access_token({"user_id": user.id, "username": user.username, "role": user.role})
 
 
 @router.post(
@@ -56,11 +62,8 @@ async def register(request: RegisterRequest) -> AuthResponse:
         HTTPException: 400 if validation fails
     """
     # Register user
-    user = await register_user(request.username, request.email, request.password, request.role)
-
-    # Create JWT token
-    access_token = create_access_token({"user_id": user.id, "username": user.username, "role": user.role})
-
+    user = register_user(request.username, request.email, request.password, request.role)
+    access_token = _build_auth_token(user)
     return AuthResponse(user=user, access_token=access_token, token_type="bearer")
 
 
@@ -105,7 +108,7 @@ async def login(request: LoginRequest) -> AuthResponse:
         HTTPException: 401 if credentials are invalid
     """
     # Authenticate user
-    user = await authenticate_user(request.username, request.password)
+    user = authenticate_user(request.username, request.password)
 
     if user is None:
         raise HTTPException(
@@ -114,9 +117,7 @@ async def login(request: LoginRequest) -> AuthResponse:
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    # Create JWT token
-    access_token = create_access_token({"user_id": user.id, "username": user.username, "role": user.role})
-
+    access_token = _build_auth_token(user)
     return AuthResponse(user=user, access_token=access_token, token_type="bearer")
 
 
@@ -158,9 +159,24 @@ async def get_current_user(user_id: Annotated[int, Depends(get_current_user_id)]
         HTTPException: 401 if token is invalid
         HTTPException: 404 if user not found
     """
-    user = await get_user_by_id(user_id)
+    user = get_user_by_id(user_id)
 
     if user is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
     return {"user": user}
+
+
+@router.get(
+    "/admin-check",
+    summary="Admin-only endpoint (RBAC)",
+    description="Returns 200 if the current user has ADMIN role; 403 otherwise. Use to verify admin access.",
+    responses={
+        200: {"description": "Admin access granted"},
+        401: {"description": "Missing or invalid token"},
+        403: {"description": "Admin role required"},
+    },
+)
+async def admin_check(admin_user: Annotated[User, Depends(require_admin)]) -> dict:
+    """Require ADMIN role to access. Future admin routes can use Depends(require_admin)."""
+    return {"message": "Admin access granted", "user_id": admin_user.id}

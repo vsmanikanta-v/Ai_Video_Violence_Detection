@@ -1,5 +1,7 @@
 # AI Video Violence Detection System - College Review Presentation Outline
 
+> **Historical note (Jan 2026 initial planning review):** This document reflects the technology stack as planned at the time of the first architecture review. The **final implementation** uses **FastAPI** (not Flask) and **python-jose** for JWT (not Flask-JWT-Extended); bcrypt is used directly (`$2b$`); database access uses **psycopg2** parameterized SQL (not SQLAlchemy). GenAI uses **Google Gemini** (`google.genai`, `GEMINI_API_KEY`). Frame input size is **64×64** (not 224×224). See `31mar2026_FinalReview.md` for the current accurate stack.
+
 ## Slide 1: Title Slide
 
 **Title:** AI Video Violence Detection System
@@ -93,7 +95,7 @@
 | **Frontend** | React.js, TypeScript, Redux Toolkit, Tailwind CSS |
 | **Backend/API** | Python 3.9+, Flask, Flask-JWT-Extended |
 | **Deep Learning** | TensorFlow/Keras (CNN + LSTM), OpenCV |
-| **Generative AI** | Google Gemini API / OpenAI (Incident Explanation) |
+| **Generative AI** | Google Gemini (via `google.genai`, `GEMINI_API_KEY`; mock if unset) |
 | **Database** | PostgreSQL (Users, Videos, Results, Audit Logs) |
 | **Architecture** | N-Tier (Presentation, Application, ML Processing, Data) |
 | **Security** | JWT Authentication, Role-Based Access Control (RBAC) |

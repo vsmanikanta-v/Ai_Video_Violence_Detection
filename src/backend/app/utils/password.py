@@ -1,18 +1,14 @@
-"""Password hashing utilities using bcrypt_sha256.
+"""Password hashing utilities using bcrypt.
 
-Provides secure password hashing and verification with passlib's
-bcrypt_sha256 scheme, which pre-hashes input and avoids bcrypt's
-72-byte password limit while retaining bcrypt strength.
+Provides secure password hashing and verification using bcrypt directly,
+with 12 rounds for adequate security without excessive latency.
 """
 
-from passlib.context import CryptContext
-
-# Configure bcrypt_sha256 context with 12 rounds (minimum security requirement)
-pwd_context = CryptContext(schemes=["bcrypt_sha256"], deprecated="auto", bcrypt__rounds=12)
+import bcrypt
 
 
 def hash_password(password: str) -> str:
-    """Hash a plain text password using bcrypt_sha256.
+    """Hash a plain text password using bcrypt.
 
     Args:
         password: Plain text password to hash
@@ -25,7 +21,7 @@ def hash_password(password: str) -> str:
         >>> hashed.startswith("$2b$")
         True
     """
-    return pwd_context.hash(password)
+    return bcrypt.hashpw(password.encode(), bcrypt.gensalt(rounds=12)).decode()
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
@@ -45,4 +41,4 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
         >>> verify_password("WrongPassword", hashed)
         False
     """
-    return pwd_context.verify(plain_password, hashed_password)
+    return bcrypt.checkpw(plain_password.encode(), hashed_password.encode())

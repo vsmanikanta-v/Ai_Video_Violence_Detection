@@ -2,6 +2,8 @@
 
 *(Ready-to-format content – can be adapted to IEEE Word/LaTeX template)*
 
+> **Implementation note:** The live system uses **FastAPI** for the REST API backend.
+
 ---
 
 ## **Title**
@@ -16,13 +18,13 @@ Violence detection in surveillance videos is a critical requirement for ensuring
 
 The system employs a **CNN + LSTM architecture** for automated violence detection through spatial feature extraction and temporal sequence modeling. The solution operates in **inference-only mode**, making it suitable for **CPU-only environments** typical of academic and resource-constrained deployments. To enhance interpretability and operational utility, a **Generative AI (GenAI) module** is integrated as a post-processing layer to generate **human-readable incident explanations** based on detection results.
 
-The system architecture follows **N-Tier enterprise design principles** comprising a **React.js frontend** with TypeScript, a **Flask-based REST API backend**, a **PostgreSQL database** for persistence, and dedicated **ML inference** and **GenAI service** layers. Secure access is enforced using **JWT-based authentication** with **Role-Based Access Control (RBAC)** supporting both standard users and administrative personnel. The solution demonstrates the integration of classical deep learning (CNN-LSTM) with modern Generative AI within a secure, scalable, and academically rigorous software system.
+The system architecture follows **N-Tier enterprise design principles** comprising a **React.js frontend** with TypeScript, a **FastAPI-based REST API backend**, a **PostgreSQL database** for persistence, and dedicated **ML inference** and **GenAI service** layers. Secure access is enforced using **JWT-based authentication** with **Role-Based Access Control (RBAC)** supporting both standard users and administrative personnel. The solution demonstrates the integration of classical deep learning (CNN-LSTM) with modern Generative AI within a secure, scalable, and academically rigorous software system.
 
 ---
 
 ## **Keywords**
 
-Computer Vision, Violence Detection, CNN, LSTM, Deep Learning, Video Analysis, Generative AI, Incident Explanation, N-Tier Architecture, JWT Authentication, Role-Based Access Control, Flask, React, PostgreSQL, Surveillance Systems
+Computer Vision, Violence Detection, CNN, LSTM, Deep Learning, Video Analysis, Generative AI, Incident Explanation, N-Tier Architecture, JWT Authentication, Role-Based Access Control, FastAPI, React, PostgreSQL, Surveillance Systems
 
 ---
 
@@ -116,7 +118,7 @@ The system follows a **layered N-Tier architecture** with clear separation of re
 - Detection results visualization
 - Incident explanation display
 
-**Layer 2: Application Layer (Flask REST API)**
+**Layer 2: Application Layer (FastAPI REST API)**
 - JWT authentication and role enforcement
 - Video file upload handling with validation
 - Request orchestration across ML and GenAI services
@@ -144,16 +146,16 @@ The system follows a **layered N-Tier architecture** with clear separation of re
 
 | Layer | Technology | Purpose |
 |-------|------------|---------|
-| **Frontend** | React 18+, TypeScript 5+ | Type-safe user interface |
+| **Frontend** | React 19.2, TypeScript 5+ | Type-safe user interface |
 | **State Management** | Redux Toolkit | Centralized application state |
 | **Styling** | Tailwind CSS | Responsive modern design |
-| **Backend** | Python 3.9+, Flask | REST API server |
-| **ML Framework** | TensorFlow/Keras 2.x | Deep learning inference |
+| **Backend** | Python 3.12+, FastAPI | REST API server |
+| **ML Framework** | TensorFlow / Keras | Deep learning inference |
 | **Video Processing** | OpenCV | Frame extraction and preprocessing |
-| **GenAI Integration** | REST API (configurable) | Incident explanation generation |
-| **Database** | PostgreSQL 14+ | Relational data storage |
-| **Authentication** | Flask-JWT-Extended | Secure token-based auth |
-| **ORM** | SQLAlchemy | Database abstraction |
+| **GenAI Integration** | Google Gemini (`google-genai`) | Incident explanation generation |
+| **Database** | PostgreSQL 16 | Relational data storage |
+| **Authentication** | python-jose (JWT) | Secure token-based auth |
+| **Data Access** | psycopg2 (direct SQL) | Database access via raw SQL |
 
 ### 3.3 System Workflow
 
@@ -186,15 +188,15 @@ The system follows a **layered N-Tier architecture** with clear separation of re
 ### 4.1 CNN-LSTM Architecture
 
 **Spatial Feature Extraction (CNN):**
-- Pre-trained CNN backbone (e.g., ResNet, VGG, MobileNet)
-- Transfer learning leverages ImageNet pre-training
-- Extracts high-level visual features from each video frame
-- Feature vector dimensionality: 512-2048 depending on architecture
+- Lightweight custom CNN built from scratch (no pre-trained ImageNet backbone)
+- Two `TimeDistributed Conv2D` layers (16 → 32 filters, 3×3, ReLU) with MaxPool2D
+- `TimeDistributed GlobalAveragePooling2D` reduces spatial dimensions
+- Feature vector dimensionality: 32 per frame
 
 **Temporal Sequence Modeling (LSTM):**
-- Processes sequence of CNN feature vectors
+- Processes sequence of CNN feature vectors (32-dim per frame)
 - Captures temporal dependencies and motion patterns
-- Hidden state dimensionality: 256-512 units
+- Hidden state dimensionality: **64 units**
 - Dropout regularization prevents overfitting
 
 **Classification Head:**
@@ -206,7 +208,7 @@ The system follows a **layered N-Tier architecture** with clear separation of re
 
 **Step 1: Video Preprocessing**
 - Frame extraction at uniform temporal intervals
-- Frame resizing to model input dimensions (e.g., 224×224)
+- Frame resizing to model input dimensions (64×64, configured via `model_input_size`)
 - Pixel normalization to [0, 1] range
 - Channel ordering adjustment (RGB)
 
@@ -229,7 +231,7 @@ The system follows a **layered N-Tier architecture** with clear separation of re
 
 - **Inference-Only Mode**: No training required, eliminates GPU dependency
 - **Batch Processing**: Efficient frame processing in batches
-- **Model Selection**: Lighter architectures (MobileNet) reduce computational load
+- **Model Selection**: Lightweight custom CNN built from scratch (Conv2D 16→32 filters, LSTM 64 units) keeps inference fast
 - **Frame Sampling**: Process subset of frames rather than every frame
 - **TensorFlow CPU Optimization**: Utilize optimized CPU kernels
 
@@ -249,58 +251,59 @@ The system follows a **layered N-Tier architecture** with clear separation of re
 
 ### 5.2 Incident Explanation Templates
 
-**High Confidence (Score ≥ 0.75):**
+**High Confidence (Score ≥ 0.8 or Score ≤ 0.2):**
 - Definitive language about incident detection
 - Clear action recommendations
 - Specific temporal details
 
-**Medium Confidence (0.50 ≤ Score < 0.75):**
+**Medium Confidence (Score ≥ 0.6 or Score ≤ 0.4):**
 - Cautious language acknowledging uncertainty
 - Manual review recommendations
 - Highlighted verification requirements
 
-**Low Confidence (Score < 0.50):**
+**Low Confidence (0.4 < Score < 0.6):**
 - Explicit uncertainty communication
 - Possible false positive acknowledgment
 - Verification priority before action
 
 ### 5.3 GenAI Service Architecture
 
-**Components:**
-- **GenAI API Client**: HTTP client with retry logic and error handling
-- **Incident Explanation Engine**: Prompt construction and template management
-- **Input Validation**: Detection result verification before prompt generation
-- **Output Processing**: Response parsing and formatting
-- **Security**: API key management via environment variables
+**Components (as implemented in `explanation_service.py`):**
+- **Google Gemini client** (`google.genai`): Generates natural-language incident explanations when `GEMINI_API_KEY` is set; safe **mock explanations** when the key is absent
+- **Prompt construction**: Project-specific templates from structured detection inputs (score, label, confidence, optional frame timestamps)
+- **Input validation**: Detection fields clamped/normalized before prompting
+- **Output processing**: Response text normalized and length-capped for API responses
+- **Security**: API key from environment only; no video bytes sent to the model
 
 ---
 
 ## **6. Implementation Details**
 
-### 6.1 Backend Implementation (Flask)
+### 6.1 Backend Implementation (FastAPI)
 
-**Key Modules:**
+**Key modules (under `src/backend/app/`):**
 
-**`models/`** - SQLAlchemy database models:
-- `user.py`: User authentication and role management
-- `video.py`: Video metadata and file references
-- `result.py`: Detection results and confidence scores
-- `audit_log.py`: System audit trail
+**`db.py`** — Shared PostgreSQL access (psycopg2); used by auth, video, audit, and admin paths.
 
-**`routes/`** - REST API endpoints:
-- `auth.py`: Registration, login, token refresh
-- `videos.py`: Video upload and file management
-- `detections.py`: Analysis triggering and result retrieval
-- `admin.py`: Administrative functions and analytics
+**`models/`** — Request/response and domain shapes (e.g. `auth.py`, `video.py`, `health.py`).
 
-**`ml/`** - Machine learning components:
-- `cnn_lstm_model.py`: Model architecture definition
-- `inference.py`: Inference pipeline orchestration
-- `preprocessing.py`: Video and frame preprocessing utilities
+**`routers/`** — FastAPI route modules:
+- `auth.py`: Registration, login, profile, admin check (`/api/auth/register`, `/api/auth/login`, `/api/auth/me`, `/api/auth/admin-check`)
+- `videos.py`: Video upload, analysis triggering, and history (`/api/videos/upload`, `/api/videos/{video_id}/analyze`, `/api/videos/history`, `/api/videos/{video_id}`)
+- `detections.py`: Detection result retrieval by result ID or video ID
+- `admin.py`: Admin analytics and audit log listing
+- `health.py`: Liveness/readiness style health endpoint
 
-**`services/`** - Business logic layer:
-- `genai_service.py`: GenAI API integration client
-- `incident_explanation_engine.py`: Prompt construction and template management
+**`ml/`** — ML pipeline:
+- `inference.py`: Loads a pre-trained Keras `.keras` model from `ML_MODEL_PATH` (CNN+LSTM-style violence classifier); stub when unset or file missing
+- `preprocessing.py`: Video and frame preprocessing for the inference path
+- `train.py`: Offline training script — takes labeled video directories, builds CNN-LSTM, saves `.keras` model; not used at runtime
+
+**`services/`** — Business logic:
+- `auth_service.py`: User authentication and roles
+- `video_service.py`: Video storage orchestration, detection runs, persistence of results
+- `explanation_service.py`: Google Gemini integration and mock fallback for incident explanations
+- `audit_service.py` / `admin_service.py`: Audit logging and admin aggregates
 
 ### 6.2 Frontend Implementation (React + TypeScript)
 
@@ -308,13 +311,15 @@ The system follows a **layered N-Tier architecture** with clear separation of re
 
 **`components/`** - Reusable UI components:
 - `VideoUpload.tsx`: Video file upload with drag-drop and progress
-- `DetectionResults.tsx`: Results display with visualization
 - `Layout.tsx`: Common layout structure
 - `PrivateRoute.tsx`, `AdminRoute.tsx`: Route guards
+- `ErrorBoundary.tsx`, `SkipNavigation.tsx`: Reliability and accessibility helpers
 
 **`pages/`** - Page-level components:
 - `Login.tsx`, `Register.tsx`: Authentication pages
+- `LandingPage.tsx`: Public landing page with hero and feature overview
 - `VideoAnalysis.tsx`: Main analysis interface
+- `DetectionResults.tsx`: Results display with detection score and explanation
 - `History.tsx`: User dashboard with analysis history
 - `AdminDashboard.tsx`: Administrative analytics
 
@@ -327,8 +332,9 @@ The system follows a **layered N-Tier architecture** with clear separation of re
 
 **`users` Table:**
 - `id`: Primary key
-- `email`: Unique user identifier
-- `password_hash`: Bcrypt-hashed password
+- `username`: Unique username (login identifier)
+- `email`: Unique email address
+- `password_hash`: bcrypt-hashed password (12 rounds, `$2b$`)
 - `role`: User role (USER, ADMIN)
 - `created_at`: Account creation timestamp
 
@@ -338,6 +344,8 @@ The system follows a **layered N-Tier architecture** with clear separation of re
 - `filename`: Original filename
 - `file_path`: Server storage path
 - `file_size`: File size in bytes
+- `duration_seconds`: Duration in seconds (nullable)
+- `video_format`: Format (e.g. MP4, AVI) (nullable)
 - `uploaded_at`: Upload timestamp
 
 **`results` Table:**
@@ -346,18 +354,20 @@ The system follows a **layered N-Tier architecture** with clear separation of re
 - `violence_score`: Detection probability [0.0, 1.0]
 - `prediction`: Classification result (VIOLENT/NON_VIOLENT)
 - `confidence_level`: Confidence category (HIGH/MEDIUM/LOW)
-- `genai_explanation`: Generated incident report
-- `processing_time`: ML inference duration
+- `key_frame_timestamps`: Array of flagged frame positions
+- `processing_time_seconds`: ML inference duration in seconds
+- `genai_summary`: GenAI-generated incident summary
 - `created_at`: Analysis timestamp
 
 **`audit_logs` Table:**
 - `id`: Primary key
 - `user_id`: Foreign key to users (nullable)
-- `action`: Action type (LOGIN, UPLOAD, DETECTION, etc.)
-- `resource_type`: Resource affected
-- `resource_id`: Resource identifier
-- `ip_address`: Client IP address
-- `timestamp`: Action timestamp
+- `action`: Action type (login, video_uploaded, video_analyzed, admin_view, etc.)
+- `entity_type`: Type of entity affected
+- `entity_id`: ID of the affected entity
+- `request_context_id`: Request correlation ID
+- `details`: Additional context
+- `created_at`: Action timestamp
 
 ---
 
@@ -367,8 +377,7 @@ The system follows a **layered N-Tier architecture** with clear separation of re
 
 **JWT-Based Authentication:**
 - Token-based stateless authentication
-- Access token expiration (configurable, default: 1 hour)
-- Refresh token mechanism for session extension
+- Access token expiration (configurable, default: 30 minutes)
 - Secure token storage in browser localStorage
 - Automatic token injection in API requests
 
@@ -380,9 +389,8 @@ The system follows a **layered N-Tier architecture** with clear separation of re
 
 ### 7.3 Input Validation
 
-- Video file format validation (MP4, AVI, MOV)
-- File size limits (e.g., max 50MB)
-- Frame count and duration validation
+- Video file format validation (MP4, AVI, MOV, WebM, MKV)
+- File size limits (max 2 MB, configured via `max_upload_size_mb`)
 - SQL injection prevention through parameterized queries
 - XSS prevention through input sanitization
 
@@ -390,7 +398,7 @@ The system follows a **layered N-Tier architecture** with clear separation of re
 
 - CORS configuration for frontend origin whitelisting
 - API key protection via environment variables
-- Request rate limiting (future enhancement)
+- Request rate limiting (SlowAPI — applied to upload and analyze routes)
 - HTTPS enforcement in production
 
 ---
@@ -457,12 +465,12 @@ The system follows a **layered N-Tier architecture** with clear separation of re
 
 ### 9.3 Detection Accuracy
 
-*Note: Detection accuracy depends on pre-trained model quality. This project focuses on system integration and architecture rather than model training from scratch.*
+*Note: Detection accuracy depends on training data quality and the custom CNN-LSTM model. This project implements both system integration and model training from scratch.*
 
 **Confidence-Based Reporting:**
-- High confidence detections (≥75%): Definitive incident reports
-- Medium confidence detections (50-74%): Cautious language with review recommendations
-- Low confidence detections (<50%): Explicit uncertainty communication
+- High confidence detections (score ≥ 0.8 or ≤ 0.2): Definitive incident reports
+- Medium confidence detections (score ≥ 0.6 or ≤ 0.4): Cautious language with review recommendations
+- Low confidence detections (0.4 < score < 0.6): Explicit uncertainty communication
 
 ### 9.4 User Experience
 
@@ -481,7 +489,7 @@ The system follows a **layered N-Tier architecture** with clear separation of re
 **Challenge**: Deep learning inference is computationally intensive; GPU acceleration unavailable in academic environment.
 
 **Solution**:
-- Selected lighter CNN architectures (MobileNet)
+- Selected custom lightweight CNN built from scratch (Conv2D 16→32 filters)
 - Implemented frame sampling rather than processing every frame
 - Utilized TensorFlow CPU optimization flags
 - Processed videos offline rather than real-time
@@ -492,8 +500,7 @@ The system follows a **layered N-Tier architecture** with clear separation of re
 
 **Solution**:
 - Implemented comprehensive error handling with user-friendly messages
-- Added retry logic for transient failures
-- Cached common explanations (future enhancement)
+- Falls back to mock explanation when API is unavailable
 - Validated detection results before API calls
 
 ### 10.3 Video File Management
@@ -572,7 +579,7 @@ The system demonstrates that sophisticated AI capabilities can be integrated int
 
 5. Brown, T. et al. (2020). "Language models are few-shot learners." *NeurIPS*.
 
-6. Flask Documentation. (2023). https://flask.palletsprojects.com/
+6. FastAPI Documentation. (2023). https://fastapi.tiangolo.com/
 
 7. React Documentation. (2023). https://react.dev/
 
@@ -587,17 +594,16 @@ The system demonstrates that sophisticated AI capabilities can be integrated int
 ## **Appendix A: Installation Instructions**
 
 ### Prerequisites
-- Python 3.9+
-- Node.js 18+
-- PostgreSQL 14+
+- Python 3.12+ (see `pyproject.toml` and `.python-version`; CI uses 3.12)
+- Node.js 20+
+- PostgreSQL 16
 - Git
 
 ### Backend Setup
 ```bash
-cd src/backend
-python -m venv venv
-venv\Scripts\activate  # Windows
-pip install -r requirements.txt
+# From repository root:
+uv sync --extra dev
+.venv\Scripts\Activate.ps1  # Windows (activate venv)
 ```
 
 ### Frontend Setup
@@ -620,26 +626,32 @@ Create `.env` files with required variables (see `infra/.env.example` and docume
 ## **Appendix B: API Endpoints**
 
 ### Authentication
+
 - `POST /api/auth/register` - User registration
 - `POST /api/auth/login` - User login
-- `POST /api/auth/refresh` - Token refresh
+- `GET /api/auth/me` - Get authenticated user profile
+- `GET /api/auth/admin-check` - Admin role verification
 
 ### Videos
+
 - `POST /api/videos/upload` - Upload video file
-- `GET /api/videos` - List user's videos
+- `POST /api/videos/{video_id}/analyze` - Trigger violence analysis
+- `GET /api/videos/history` - List user's videos
+- `GET /api/videos/{video_id}` - Get video metadata by ID
 
 ### Detections
-- `POST /api/detections/analyze` - Trigger violence analysis
-- `GET /api/detections/results/{video_id}` - Retrieve detection results
-- `GET /api/detections/history` - User's analysis history
+
+- `GET /api/detections/result/{result_id}` - Get detection result by result ID
+- `GET /api/detections/video/{video_id}` - List detections for a video
 
 ### Admin
-- `GET /api/admin/analytics` - System-wide analytics
+
+- `GET /api/admin/stats` - System-wide analytics and statistics
 - `GET /api/admin/audit-logs` - Audit log retrieval
 
 ---
 
-**Project Completion Date**: January 2026  
+**Project Completion Date**: March 2026
 **Author**: Viswanatha Swamy P K  
 **Institution**: [Your Institution Name]  
 **Course**: [Your Course Code and Name]
