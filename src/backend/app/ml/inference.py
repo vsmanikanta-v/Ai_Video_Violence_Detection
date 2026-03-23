@@ -6,6 +6,7 @@ or the model file is missing, callers should use a stub.
 """
 
 import logging
+import os
 import time
 from pathlib import Path
 from threading import Lock
@@ -29,8 +30,16 @@ def _get_keras():
     if _keras is not None:
         return _keras
     try:
+        # Configure TensorFlow runtime logs before importing Keras/TensorFlow.
+        if settings.tf_cpp_min_log_level:
+            os.environ.setdefault("TF_CPP_MIN_LOG_LEVEL", str(settings.tf_cpp_min_log_level))
+        if settings.tf_enable_onednn_opts is not None:
+            os.environ["TF_ENABLE_ONEDNN_OPTS"] = str(settings.tf_enable_onednn_opts)
+
+        import tensorflow as tf  # noqa: PLC0415
         import keras  # noqa: PLC0415
 
+        tf.get_logger().setLevel("ERROR")
         _keras = keras
         return _keras
     except ImportError:
