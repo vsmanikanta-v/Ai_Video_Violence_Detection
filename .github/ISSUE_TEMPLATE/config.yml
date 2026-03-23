@@ -1,0 +1,9 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 💬 Discussions
+    url: https://github.com/Srivari-Hema-SSPL-2026/consumer-complaints-ml-genai-ntier/discussions
+    about: Ask questions, share ideas, or discuss the Consumer Complaints ML + GenAI System
+  - name: 📚 Documentation
+    url: https://github.com/Srivari-Hema-SSPL-2026/consumer-complaints-ml-genai-ntier#readme
+    about: Check the README and documentation for more information
+

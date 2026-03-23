@@ -1,0 +1,8 @@
+{
+  "version": "1.0",
+  "settings": {
+    "enableCopilot": true,
+    "autoSuggest": true,
+    "language": "en"
+  }
+}

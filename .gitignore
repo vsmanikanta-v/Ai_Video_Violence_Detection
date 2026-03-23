@@ -10,13 +10,6 @@
 *.userosscache
 *.sln.docstates
 *.env
-.copilot/
-.cursor/
-
-# Track only GitHub Actions workflows under .github/
-.github/*
-!.github/workflows/
-!.github/workflows/**
 
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
@@ -424,22 +417,29 @@ FodyWeavers.xsd
 *.msm
 *.msp
 
-# Python virtual environments
-__pycache__
-.venv/
-
-# Frontend (Vite/React)
-src/frontend/dist/
-src/frontend/node_modules/
-src/frontend/.env
-src/frontend/.env.local
-src/frontend/.env.development.local
-src/frontend/.env.test.local
-src/frontend/.env.production.local
-
-# Database files
-*.db
-*.sqlite
-*.sqlite3
+# Python cache files
+__pycache__/
+*.pyc
 *.egg
 *.egg-info/
+.env
+
+# Node Modules and React.js build output
+node_modules/
+data/uploads/
+models/*.h5
+models/*.keras
+src/backend/models/
+
+# Test coverage output (Vitest / pytest-cov)
+coverage/
+.coverage
+htmlcov/
+
+# Source material for documentation, which is not needed in the repository
+source-material/
+
+# Uploaded videos and generated detection results (large files not suitable for git)
+uploads/
+src/backend/data/violent/
+src/backend/data/non-violent/
