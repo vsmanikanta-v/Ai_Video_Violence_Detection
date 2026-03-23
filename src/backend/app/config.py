@@ -63,6 +63,8 @@ class Settings(BaseSettings):
     # ML inference (CNN-LSTM; optional; leave unset to use stub)
     ml_model_path: str | None = None
     inference_batch_size: int = 16
+    tf_cpp_min_log_level: str = "2"
+    tf_enable_onednn_opts: int | None = None
 
     # Video preprocessing (frame extraction and normalization for ML)
     frame_extract_fps: float = 2.0
