@@ -1,67 +1,64 @@
 [project]
-name = "ai-video-violence-detectionr"
+name = "ai-video-violence-detection"
 version = "0.1.0"
-description = "N-Tier Enterprise Video Violence Detection System using ML and GenAI (Gemini)"
+description = "AI-powered video surveillance system that detects violent activities using CNN-LSTM deep learning and generates human-readable incident explanations using Generative AI"
 readme = "README.md"
 requires-python = ">=3.12"
 license = {text = "MIT"}
 authors = [
-    {name = "Srivari Hema Software Solutions Pvt Ltd"}
+    {name = "Viswanatha Swamy P K"}
 ]
 keywords = [
-    "ai-video-violence-detection",
-    "machine-learning",
+    "computer-vision",
+    "violence-detection",
+    "cnn-lstm",
+    "deep-learning",
+    "video-analysis",
     "genai",
-    "gemini",
+    "surveillance",
     "fastapi",
-    "scikit-learn",
-    "nlp",
-    "classification"
+    "react",
+    "postgresql"
 ]
 classifiers = [
-    "Development Status :: 3 - Alpha",
+    "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.12",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
-    "Topic :: Text Processing :: General",
+    "Topic :: Scientific/Engineering :: Image Recognition",
+    "Topic :: Security",
 ]
 
+# Backend (FastAPI) and shared deps below. Install from repo root: uv sync (or uv sync --extra dev)
 dependencies = [
-    "fastapi==0.110.0",
-    "slowapi==0.1.9",
-    "uvicorn[standard]==0.27.1",
-    "pydantic==2.6.1",
-    "pydantic-settings==2.1.0",
-    "python-dotenv==1.0.1",
-    "google-generativeai>=0.4.0",
-    "scikit-learn>=1.4.0",
-    "pandas>=2.2.0",
-    "numpy>=1.26.0",
-    "nltk>=3.8.1",
-    "python-multipart==0.0.9",
-    "pyjwt==2.8.0",
-    "passlib[bcrypt]==1.7.4",
-    "bcrypt==4.0.1",
-    "email-validator==2.3.0",
-    "python-jose[cryptography]==3.3.0",
-    "psycopg2-binary==2.9.10",
-    "sqlalchemy==2.0.36",
-    "pyyaml==6.0.2",
-    "httpx==0.27.2",
-    "joblib>=1.3.2"
+    "fastapi>=0.110.0",
+    "slowapi>=0.1.9",
+    "uvicorn[standard]>=0.27.0",
+    "python-multipart>=0.0.9",
+    "pydantic[email]>=2.6.0",
+    "pydantic-settings>=2.2.0",
+    "python-jose[cryptography]>=3.3.0",
+    "bcrypt>=4.0.0",
+    "psycopg2-binary>=2.9.10",
+    "PyYAML>=6.0.2",
+    "google-genai>=1.0.0",
+    "opencv-python-headless>=4.8.0",
+    "numpy>=1.24.0",
+    "tensorflow-cpu>=2.21.0",
 ]
 
 [project.optional-dependencies]
 dev = [
-    "black==24.10.0",
-    "isort==5.13.2",
-    "flake8==7.1.1",
-    "mypy==1.14.1",
-    "pytest==8.3.4",
-    "pytest-cov==6.0.0",
-    "pytest-asyncio==0.25.2",
+    "black",
+    "isort",
+    "flake8",
+    "mypy",
+    "pytest>=8.0.0",
+    "pytest-cov>=4.1.0",
+    "httpx>=0.27.0",
 ]
 
 [build-system]
@@ -114,6 +111,14 @@ warn_unused_configs = true
 disallow_untyped_defs = false
 ignore_missing_imports = true
 
-[tool.coverage.run]
-source = ["src/backend/app"]
-omit = ["*/tests/*", "*/test_*.py"]
+[tool.flake8]
+max-line-length = 120
+max-complexity = 10
+exclude = [
+    ".git",
+    ".venv",
+    "venv",
+    "node_modules",
+    "__pycache__",
+    ".pytest_cache",
+]
