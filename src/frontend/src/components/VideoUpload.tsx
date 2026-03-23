@@ -4,13 +4,15 @@ import { useAppDispatch, useAppSelector } from '@/store/hooks'
 import { addVideoToHistory, setError, setUploadProgress } from '@/store/videosSlice'
 
 const ALLOWED = ['.mp4', '.avi', '.webm', '.mov', '.mkv']
-const MAX_MB = 2
+const MAX_MB = 10
 
 interface VideoUploadProps {
   onUploaded?: (videoId: number) => void
+  disabled?: boolean
 }
 
-export function VideoUpload({ onUploaded }: VideoUploadProps) {
+export function VideoUpload({ onUploaded, disabled = false }: VideoUploadProps) {
+  const COMPLETE_HOLD_MS = 2000
   const dispatch = useAppDispatch()
   const progress = useAppSelector((s) => s.videos.uploadProgress)
   const [file, setFile] = useState<File | null>(null)
@@ -50,7 +52,7 @@ export function VideoUpload({ onUploaded }: VideoUploadProps) {
       const res = await apiUploadVideo(file, (p) => dispatch(setUploadProgress(p.percent)))
       dispatch(addVideoToHistory(res.video))
       dispatch(setUploadProgress(100))
-      setTimeout(() => dispatch(setUploadProgress(null)), 800)
+      setTimeout(() => dispatch(setUploadProgress(null)), COMPLETE_HOLD_MS)
       setFile(null)
       setValidationError(null)
       onUploaded?.(res.video.id)
@@ -74,6 +76,7 @@ export function VideoUpload({ onUploaded }: VideoUploadProps) {
             type="file"
             accept={ALLOWED.join(',')}
             onChange={onFileChange}
+            disabled={disabled || progress !== null}
             aria-describedby="video-upload-help"
             className="block w-full text-sm text-soft-slate file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:bg-soft-sage/30 file:text-soft-navy"
           />
@@ -84,7 +87,7 @@ export function VideoUpload({ onUploaded }: VideoUploadProps) {
         <button
           type="button"
           onClick={upload}
-          disabled={!file || progress !== null}
+          disabled={!file || progress !== null || disabled}
           aria-busy={progress !== null && progress < 100}
           className="px-4 py-2 rounded-lg bg-soft-sage/50 text-soft-navy font-medium hover:bg-soft-sage/70 disabled:opacity-50 disabled:cursor-not-allowed transition"
         >
@@ -93,6 +96,8 @@ export function VideoUpload({ onUploaded }: VideoUploadProps) {
               <span className="sr-only">Uploading, please wait</span>
               <span aria-hidden="true">Uploading {progress}%</span>
             </>
+          ) : progress === 100 ? (
+            'Uploaded'
           ) : (
             'Upload'
           )}
@@ -103,7 +108,7 @@ export function VideoUpload({ onUploaded }: VideoUploadProps) {
           {validationError}
         </p>
       )}
-      {progress !== null && progress < 100 && (
+      {progress !== null && (
         <div
           className="mt-4 h-2 rounded-full bg-soft-sand overflow-hidden"
           role="progressbar"

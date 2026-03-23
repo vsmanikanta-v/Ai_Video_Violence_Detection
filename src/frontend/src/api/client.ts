@@ -35,6 +35,10 @@ export interface ApiError {
   status: number
 }
 
+let inFlightHistory: Promise<VideoWithResults[]> | null = null
+let inFlightMe: Promise<{ user: User }> | null = null
+const inFlightGet = new Map<string, Promise<unknown>>()
+
 async function handleResponse<T>(res: Response): Promise<T> {
   const text = await res.text()
   let data: unknown
@@ -77,8 +81,18 @@ function handleXhrResponse<T>(
 }
 
 export async function apiGet<T>(path: string): Promise<T> {
-  const res = await fetch(`${BASE_URL}${path}`, { headers: getHeaders() })
-  return handleResponse<T>(res)
+  const key = `GET:${path}`
+  const existing = inFlightGet.get(key)
+  if (existing) return existing as Promise<T>
+
+  const request = fetch(`${BASE_URL}${path}`, { headers: getHeaders() })
+    .then((res) => handleResponse<T>(res))
+    .finally(() => {
+      inFlightGet.delete(key)
+    })
+
+  inFlightGet.set(key, request as Promise<unknown>)
+  return request
 }
 
 export async function apiPost<T>(path: string, body: unknown): Promise<T> {
@@ -142,9 +156,16 @@ export async function apiAnalyzeVideo(videoId: number): Promise<AnalyzeResponse>
   return handleResponse<AnalyzeResponse>(res)
 }
 
-export async function apiHistory(signal?: AbortSignal): Promise<VideoWithResults[]> {
-  const res = await fetch(`${BASE_URL}/api/videos/history`, { headers: getHeaders(), signal })
-  return handleResponse<VideoWithResults[]>(res)
+export function apiHistory(): Promise<VideoWithResults[]> {
+  if (inFlightHistory) return inFlightHistory
+
+  inFlightHistory = fetch(`${BASE_URL}/api/videos/history`, { headers: getHeaders() })
+    .then((res) => handleResponse<VideoWithResults[]>(res))
+    .finally(() => {
+      inFlightHistory = null
+    })
+
+  return inFlightHistory
 }
 
 export async function apiGetVideo(videoId: number): Promise<VideoOut> {
@@ -192,7 +213,14 @@ export async function apiLogin(body: { username: string; password: string }): Pr
   return handleResponse<AuthResponse>(res)
 }
 
-export async function apiMe(signal?: AbortSignal): Promise<{ user: User }> {
-  const res = await fetch(`${BASE_URL}/api/auth/me`, { headers: getHeaders(), signal })
-  return handleResponse<{ user: User }>(res)
+export function apiMe(): Promise<{ user: User }> {
+  if (inFlightMe) return inFlightMe
+
+  inFlightMe = fetch(`${BASE_URL}/api/auth/me`, { headers: getHeaders() })
+    .then((res) => handleResponse<{ user: User }>(res))
+    .finally(() => {
+      inFlightMe = null
+    })
+
+  return inFlightMe
 }

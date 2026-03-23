@@ -178,7 +178,7 @@ Copy-Item .env.example .env
 | `GEMINI_API_KEY`                | No       | Gemini API key for incident explanations; omit for mock mode      |
 | `GEMINI_MODEL`                  | No       | Model name (default `gemini-3-flash-preview`)                     |
 | `UPLOAD_DIR`                    | No       | Directory for uploaded videos; default: uploads                   |
-| `MAX_UPLOAD_SIZE_MB`            | No       | Max upload size in MB; default: 100                               |
+| `MAX_UPLOAD_SIZE_MB`            | No       | Max upload size in MB; default: 10                                |
 | `RATELIMIT_ENABLED`             | No       | Enable rate limiting; default: true (set false in tests)           |
 | `RATELIMIT_DEFAULT`             | No       | Global limit per IP; default: 50 per hour                          |
 | `RATELIMIT_VIDEO_UPLOAD`        | No       | Limit for upload endpoint; default: 5 per minute                 |

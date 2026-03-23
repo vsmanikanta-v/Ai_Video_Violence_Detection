@@ -25,23 +25,24 @@ function AppRoutes() {
       dispatch(setLoaded(true))
       return
     }
-    // User already set (e.g. from login response) — skip redundant /me call
     if (user) {
       dispatch(setLoaded(true))
       return
     }
-    const controller = new AbortController()
-    apiMe(controller.signal)
+    let cancelled = false
+    apiMe()
       .then((data) => {
-        if (!controller.signal.aborted) dispatch(setUser(data.user))
+        if (!cancelled) dispatch(setUser(data.user))
       })
       .catch(() => {
-        if (!controller.signal.aborted) dispatch(clearAuth())
+        if (!cancelled) dispatch(clearAuth())
       })
       .finally(() => {
-        if (!controller.signal.aborted) dispatch(setLoaded(true))
+        if (!cancelled) dispatch(setLoaded(true))
       })
-    return () => controller.abort()
+    return () => {
+      cancelled = true
+    }
   }, [token, user, dispatch])
 
   if (!loaded) {
@@ -74,7 +75,7 @@ function AppRoutes() {
 export default function App() {
   return (
     <ErrorBoundary>
-      <BrowserRouter>
+      <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <SkipNavigation />
         <AppRoutes />
       </BrowserRouter>

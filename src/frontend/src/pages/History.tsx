@@ -12,19 +12,21 @@ export function History() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const controller = new AbortController()
+    let cancelled = false
     dispatch(setError(null))
-    apiHistory(controller.signal)
+    apiHistory()
       .then((data) => {
-        if (!controller.signal.aborted) dispatch(setHistory(data))
+        if (!cancelled) dispatch(setHistory(data))
       })
       .catch(() => {
-        if (!controller.signal.aborted) dispatch(setError('Failed to load history'))
+        if (!cancelled) dispatch(setError('Failed to load history'))
       })
       .finally(() => {
-        if (!controller.signal.aborted) setLoading(false)
+        if (!cancelled) setLoading(false)
       })
-    return () => controller.abort()
+    return () => {
+      cancelled = true
+    }
   }, [dispatch])
 
   if (loading) {

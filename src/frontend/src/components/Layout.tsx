@@ -31,9 +31,27 @@ export function Layout({ children }: LayoutProps) {
                 <Link to="/upload" className="text-soft-slate hover:text-soft-navy">Upload</Link>
                 <Link to="/history" className="text-soft-slate hover:text-soft-navy">History</Link>
                 {user?.role === 'ADMIN' && (
-                  <Link to="/admin" className="text-soft-slate hover:text-soft-navy">Admin</Link>
+                  <Link to="/admin" className="text-soft-slate hover:text-soft-navy">Dashboard</Link>
                 )}
-                <span className="text-soft-slate text-sm">{user?.username ?? 'User'}</span>
+                <span
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-soft-sage/40 bg-soft-sage/20 text-soft-navy"
+                  title={user?.username ?? 'User'}
+                  aria-label={`Signed in as ${user?.username ?? 'User'}`}
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    className="h-4 w-4"
+                    aria-hidden="true"
+                  >
+                    <circle cx="12" cy="8" r="3.25" />
+                    <path d="M5.5 19.25c0-3.1 2.9-5.25 6.5-5.25s6.5 2.15 6.5 5.25" />
+                  </svg>
+                  <span className="sr-only">{user?.username ?? 'User'}</span>
+                </span>
                 <button
                   type="button"
                   onClick={handleLogout}

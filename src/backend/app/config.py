@@ -49,7 +49,7 @@ class Settings(BaseSettings):
 
     # Video upload
     upload_dir: str = "uploads"
-    max_upload_size_mb: int = 2
+    max_upload_size_mb: int = 10
 
     # Rate limiting (per IP; cost control and DoS mitigation)
     ratelimit_enabled: bool = True
