@@ -17,6 +17,8 @@ Model output: float in [0, 1] — violence probability.
 """
 
 import argparse
+import logging
+import os
 import sys
 import time
 from pathlib import Path
@@ -119,6 +121,11 @@ def _build_model(img_size: int, lstm_dropout: float = 0.3) -> "keras.Model":  # 
         LSTM (64 units, configurable dropout)   → (None, 64)
         Dense (1, sigmoid)                      → violence probability
     """
+    # Reduce TensorFlow startup noise for offline training on CPU-only setups.
+    os.environ.setdefault("TF_CPP_MIN_LOG_LEVEL", "2")
+    os.environ.setdefault("TF_ENABLE_ONEDNN_OPTS", "0")
+    logging.getLogger("tensorflow").setLevel(logging.ERROR)
+
     import keras
     from keras import layers
 

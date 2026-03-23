@@ -32,9 +32,9 @@ def _get_keras():
     try:
         # Configure TensorFlow runtime logs before importing Keras/TensorFlow.
         if settings.tf_cpp_min_log_level:
-            os.environ.setdefault("TF_CPP_MIN_LOG_LEVEL", str(settings.tf_cpp_min_log_level))
-        if settings.tf_enable_onednn_opts is not None:
-            os.environ["TF_ENABLE_ONEDNN_OPTS"] = str(settings.tf_enable_onednn_opts)
+            os.environ["TF_CPP_MIN_LOG_LEVEL"] = str(settings.tf_cpp_min_log_level)
+        os.environ["TF_ENABLE_ONEDNN_OPTS"] = str(settings.tf_enable_onednn_opts)
+        logging.getLogger("tensorflow").setLevel(logging.ERROR)
 
         import tensorflow as tf  # noqa: PLC0415
         import keras  # noqa: PLC0415
