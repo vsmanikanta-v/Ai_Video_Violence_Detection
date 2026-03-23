@@ -10,6 +10,13 @@
 *.userosscache
 *.sln.docstates
 *.env
+.copilot/
+.cursor/
+
+# Track only GitHub Actions workflows under .github/
+.github/*
+!.github/workflows/
+!.github/workflows/**
 
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
