@@ -286,7 +286,7 @@ Stop and fully restart the backend (hot reload does **not** pick up `.env` chang
 ```powershell
 # Ctrl+C to stop, then:
 cd src/backend
-uv run uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+uv run uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 ```
 
 ### Step 5 — Verify real inference is active
