@@ -220,7 +220,7 @@ uv run python src/backend/app/ml/train.py `
   --violent-dir     src/backend/data/violent `
   --non-violent-dir src/backend/data/non-violent `
   --output          src/backend/models/violence_model.keras `
-  --epochs          50
+  --epochs          100
 ```
 
 **Options:**
