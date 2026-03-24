@@ -203,7 +203,7 @@ Training is an **offline step** — the running application never trains; it onl
 
 Create two directories and populate them with labeled short video clips (`.mp4`, `.avi`, `.mov`):
 
-```
+```text
 src/backend/data/
   violent/          ← violent video clips (minimum 3 recommended)
   non-violent/      ← non-violent video clips (minimum 3 recommended)
@@ -236,7 +236,7 @@ uv run python src/backend/app/ml/train.py `
 
 **Expected output:**
 
-```
+```text
 ============================================================
 CNN-LSTM Violence Detection — Training
 ============================================================
@@ -301,7 +301,7 @@ Upload and analyze a video in the UI. Confirm:
 
 ### Model architecture
 
-```
+```text
 Input:  (None, 64, 64, 3)         — variable frame sequence, RGB float32 [0,1]
 TimeDistributed Conv2D(16, 3×3)   — per-frame spatial features
 TimeDistributed MaxPool2D(2×2)
