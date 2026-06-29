@@ -2,7 +2,7 @@
 
 This directory contains Mermaid diagram source files (`.mmd`) and their PNG exports (`.png`) for the AI Video Violence Detection System.
 
-## 📁 Diagram Files
+##  Diagram Files
 
 | Diagram | Source File | PNG Export | Used In | Path Reference |
 |---------|-------------|------------|---------|----------------|
@@ -13,7 +13,7 @@ This directory contains Mermaid diagram source files (`.mmd`) and their PNG expo
 | Target Architecture | `system-architecture-simple.mmd` | `system-architecture-simple.png` | `docs/06_architecture_plan.md` | `diagrams/...` |
 | Database ERD | `database-erd.mmd` | `database-erd.png` | `docs/11_database_schema.md` | `diagrams/...` |
 
-## 🔄 Workflow
+## Workflow
 
 ### Editing Diagrams
 
@@ -59,7 +59,7 @@ Get-ChildItem docs\diagrams\*.mmd | ForEach-Object {
 4. Right-click → Export as PNG
 5. Save to this directory
 
-## 📋 Best Practices
+##  Best Practices
 
 - **Single Source of Truth**: Always edit `.mmd` files, never edit PNGs directly
 - **Consistent Naming**: PNG filename must match `.mmd` filename (e.g., `diagram.mmd` → `diagram.png`)
@@ -68,7 +68,7 @@ Get-ChildItem docs\diagrams\*.mmd | ForEach-Object {
 - **White Background**: Use white background for consistency (or transparent for dark mode)
 - **Use Config File**: Always use `mermaid-config.json` for consistent styling
 
-## 🔗 Path References in Markdown
+##  Path References in Markdown
 
 **IMPORTANT:** Path references differ by file location:
 
@@ -85,7 +85,7 @@ Get-ChildItem docs\diagrams\*.mmd | ForEach-Object {
 ![Diagram](diagrams/system-architecture-requirements.png)
 ```
 
-## 📝 Configuration
+##  Configuration
 
 The `mermaid-config.json` file ensures consistent styling across all exports:
 - Theme: default
@@ -93,7 +93,7 @@ The `mermaid-config.json` file ensures consistent styling across all exports:
 - Layout: Optimized for readability
 - Scale: 2x for retina displays
 
-## 📝 Notes
+##  Notes
 
 - PNG files are binary and tracked in git (see `.gitattributes`)
 - ASCII fallbacks are maintained in markdown files for accessibility (wrapped in `<details>` tags)

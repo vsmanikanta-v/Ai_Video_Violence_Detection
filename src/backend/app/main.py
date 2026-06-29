@@ -9,6 +9,7 @@ from contextlib import asynccontextmanager
 
 import yaml
 from app.config import settings
+from app.db import ensure_database_schema
 from app.limiter import limiter
 from app.routers import admin, auth, detections, health, videos
 from app.services.auth_service import register_user
@@ -25,6 +26,7 @@ async def _ensure_default_users() -> None:  # noqa: C901
     """Create default admin and user accounts if configured and they do not exist."""
     if not settings.create_default_users:
         return
+    ensure_database_schema()
     admin_password = settings.default_admin_password
     user_password = settings.default_user_password
     if not admin_password or not user_password:

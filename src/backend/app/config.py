@@ -32,7 +32,7 @@ class Settings(BaseSettings):
     jwt_secret_key: str
     jwt_algorithm: str = "HS256"
     jwt_access_token_expire_minutes: int = 30
-    database_url: str = "postgresql://postgres:postgres@localhost:5432/ai_video_violence"
+    database_url: str = "postgresql://postgres:postgres@localhost:5432/ai-video-violence"
 
     # Default users (development only — do not enable in production)
     create_default_users: bool = False
