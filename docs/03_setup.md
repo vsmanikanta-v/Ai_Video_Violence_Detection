@@ -1,8 +1,6 @@
 # Setup Guide: AI Video Violence Detection System
 
 **Project:** AI Video Violence Detection System  
-**Purpose:** Complete installation and configuration guide  
-**For Usage Instructions:** See [Usage Guide](04_usage.md)
 
 ---
 
