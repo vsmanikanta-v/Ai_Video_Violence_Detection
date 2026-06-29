@@ -573,7 +573,3 @@ Once setup is complete:
 - [Database Schema](11_database_schema.md) - Database documentation
 
 ---
-
-**Document Version:** 1.1
-**Last Updated:** March 21, 2026
-**Status:** Complete

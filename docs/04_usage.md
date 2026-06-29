@@ -302,7 +302,3 @@ There is no separate “all users’ videos” browser or export in the current 
 - [Authentication Guide](09_authentication_authorization.md) - Security documentation
 
 ---
-
-**Document Version:** 1.1  
-**Last Updated:** March 22, 2026  
-**Status:** Complete
